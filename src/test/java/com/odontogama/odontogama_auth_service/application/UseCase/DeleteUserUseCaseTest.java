@@ -14,9 +14,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
+
 
 @ExtendWith(MockitoExtension.class)
 public class DeleteUserUseCaseTest {
@@ -44,6 +44,8 @@ public class DeleteUserUseCaseTest {
         deleteUserUseCase.execute(userId);
 
         //Assert
+        assertFalse(user.getActive());
+
         verify(userRepository).findById(userId);
         verify(userRepository).save(user);
     }
@@ -58,11 +60,11 @@ public class DeleteUserUseCaseTest {
                 .thenReturn(Optional.empty());
 
         // Act
+
         UserException exception = assertThrows(
                 UserException.class,
                 () -> deleteUserUseCase.execute(userId)
         );
-
         // Assert
         assertEquals(UserErrorCode.USER_NOT_FOUND, exception.getErrorCode());
 
