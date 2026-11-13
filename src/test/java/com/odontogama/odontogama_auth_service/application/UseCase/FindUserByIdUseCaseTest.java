@@ -1,6 +1,8 @@
 package com.odontogama.odontogama_auth_service.application.UseCase;
 
 import com.odontogama.auth.application.usecase.FindUserByIdUseCase;
+import com.odontogama.auth.domain.exception.UserErrorCode;
+import com.odontogama.auth.domain.exception.UserException;
 import com.odontogama.auth.domain.model.User;
 import com.odontogama.auth.domain.model.UserRole;
 import com.odontogama.auth.domain.repository.UserRepository;
@@ -13,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +48,27 @@ public class FindUserByIdUseCaseTest {
         assertEquals(user,result);
 
         verify(userRepository).findById(userId);
+    }
+
+    @Test
+    void shouldThrowUserExceptionWhenIdDoesNotExist(){
+
+        //Arrange
+        Long userId = 1L;
+
+        when (userRepository.findById(userId))
+                .thenReturn(Optional.empty());
+
+        //Act
+        UserException exception = assertThrows(
+                UserException.class,
+                ()->findUserByIdUseCase.execute(userId)
+        );
+
+        //Assert
+        assertEquals(UserErrorCode.USER_NOT_FOUND,exception.getErrorCode());
+        verify(userRepository).findById(userId);
 
     }
+
 }

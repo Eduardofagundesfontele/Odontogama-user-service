@@ -7,11 +7,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.List;
@@ -63,6 +66,52 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException exception, HttpServletRequest request){
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_REQUEST_BODY",
+                "Request body is missing or invalid",
+                request.getRequestURI(),
+                null
+
+        );
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(MissingServletRequestParameterException exception,  HttpServletRequest request){
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_PARAMETER",
+                "Required parameter '" + exception.getParameterName() + "' is missing",
+                request.getRequestURI(),
+                null
+        );
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request){
+               ErrorResponse response = new ErrorResponse(
+                       Instant.now(),
+                       HttpStatus.BAD_REQUEST.value(),
+                       "INVALID_PARAMETER",
+                       "Parameter'" + exception.getName() + "' Has an invalid formt",
+                       request.getRequestURI(),
+                       null
+               );
+               return ResponseEntity
+                       .status(HttpStatus.BAD_REQUEST)
+                       .body(response);
     }
 
     @ExceptionHandler(Exception.class)
