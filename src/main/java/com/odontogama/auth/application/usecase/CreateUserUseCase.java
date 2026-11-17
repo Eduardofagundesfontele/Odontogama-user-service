@@ -16,15 +16,12 @@ public class CreateUserUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-
-
     public User execute(String email,String password){
-
-
 
         if (userRepository.existsByEmail(email)){
             throw new UserException(UserErrorCode.EMAIL_ALREADY_EXISTS);
         }
+
         String encodedPassword = passwordEncoder.encode(password);
 
         User user = User.create(
@@ -33,6 +30,5 @@ public class CreateUserUseCase {
                 UserRole.PATIENT);
 
         return userRepository.save(user);
-
     }
 }
