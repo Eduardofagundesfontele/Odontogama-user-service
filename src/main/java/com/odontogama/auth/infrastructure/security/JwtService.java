@@ -1,10 +1,10 @@
 package com.odontogama.auth.infrastructure.security;
 
 import com.odontogama.auth.domain.model.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -39,13 +39,22 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractEmail(String token) {
+    private Claims extractClaims(String token){
         return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
+
+    }
+    public String extractEmail(String token) {
+        return extractClaims(token)
                 .getSubject();
+    }
+
+    public String extractRole(String token){
+       return extractClaims(token)
+               .get("role",String.class);
     }
 }
 
