@@ -13,6 +13,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,11 +28,38 @@ class CreateUserUseCaseTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private PasswordEncoder passwordEncoder;
+
 	@InjectMocks
 	private CreateUserUseCase createUserUseCase;
 
 	@Captor
 	private ArgumentCaptor<User> userCaptor;
+
+
+	@Test
+	void shouldEncodePasswordBeforeSaving(){
+		//arrange
+		String email = "eduardo@email.com";
+		String password = "Senha123!";
+
+		when(userRepository.existsByEmail(email)).thenReturn(false);
+
+		when(passwordEncoder.encode(password)).thenReturn("encoded-password");
+
+		//act
+		createUserUseCase.execute(email, password);
+
+		//assert
+		verify(userRepository).save(userCaptor.capture());
+
+		User savedUser = userCaptor.getValue();
+
+		assertEquals("encoded-password", savedUser.getPassword());
+
+
+	}
 
 
 	@Test
@@ -54,6 +82,7 @@ class CreateUserUseCaseTest {
 
 		verify(userRepository).existsByEmail(email);
 		verify(userRepository, never()).save(any());
+		verify(passwordEncoder,never()).encode(any());
 
 	}
 
@@ -65,6 +94,8 @@ class CreateUserUseCaseTest {
 
 		when(userRepository.existsByEmail(email))
 				.thenReturn(false);
+
+		when(passwordEncoder.encode(password)).thenReturn("encoded-password");
 
 		// Act
 		createUserUseCase.execute(email, password);
@@ -86,6 +117,8 @@ class CreateUserUseCaseTest {
 
 		when(userRepository.existsByEmail(email))
 				.thenReturn(false);
+
+		when(passwordEncoder.encode(password)).thenReturn("encoded-password");
 
 		// Act
 		createUserUseCase.execute(email, password);

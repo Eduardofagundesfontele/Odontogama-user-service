@@ -153,6 +153,9 @@ public class GlobalExceptionHandler {
                  INVALID_EMAIL,
                  INVALID_PASSWORD ->
                     HttpStatus.BAD_REQUEST;
+
+            case INVALID_CREDENTIALS ->
+                HttpStatus.UNAUTHORIZED;
         };
     }
 }
