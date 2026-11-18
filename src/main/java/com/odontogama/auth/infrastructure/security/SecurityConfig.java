@@ -1,6 +1,7 @@
 package com.odontogama.auth.infrastructure.security;
 
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated());
 
         httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+       httpSecurity.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+           response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);}));
 
 
         return httpSecurity.build();
