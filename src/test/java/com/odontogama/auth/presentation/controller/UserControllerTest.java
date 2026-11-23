@@ -19,6 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -26,13 +29,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-
-
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -52,6 +51,14 @@ public class UserControllerTest {
     private UserController userController;
 
     private MockMvc mockMvc;
+
+    private Authentication authAs (String email, String role){
+        return new UsernamePasswordAuthenticationToken(
+                email,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+        );
+    }
 
     private static final Long USER_ID = 1L;
     private static final Long NON_EXISTENT_ID = 999L;
@@ -196,13 +203,16 @@ class FindById {
         // arrange
         when(findUserByIdUseCase.execute(UserControllerTest.USER_ID)).thenReturn(user);
         when(mapper.toResponse(user)).thenReturn(response);
+        when(user.getEmail()).thenReturn(EMAIL);
 
         // act
-        ResultActions result = mockMvc.perform(get("/users/{id}", USER_ID));
+        ResultActions result = mockMvc.perform(get("/users/{id}", USER_ID)
+                .principal(authAs(EMAIL,"PATIENT")));
 
         // assert
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(UserControllerTest.USER_ID))
+                .andExpect(jsonPath("$.id").value
+                        (UserControllerTest.USER_ID))
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.role").value("PATIENT"));
     }
@@ -354,13 +364,15 @@ class FindById {
                     CREATED_AT,
                     UPDATED_AT);
 
+            when(findUserByIdUseCase.execute(USER_ID)).thenReturn(user);
             when(updateUserUseCase.execute(USER_ID, NEW_EMAIL, PASSWORD)).thenReturn(user);
             when(mapper.toResponse(user)).thenReturn(userResponse);
-
+            when(user.getEmail()).thenReturn(EMAIL);
             //act
             ResultActions resultActions = mockMvc.perform(put("/users/{id}", USER_ID)
                     .contentType(APPLICATION_JSON)
-                    .content(UPDATE_BODY));
+                    .content(UPDATE_BODY)
+                    .principal(authAs(EMAIL,"PATIENT")));
 
             //assert
             resultActions.andExpect(status().isOk())
@@ -384,15 +396,18 @@ class FindById {
         @DisplayName("should return 404 when user does not exist")
         void shouldReturn404WhenUpdatingNonExistentUser() throws Exception{
             //arrange
-            when(updateUserUseCase.execute(NON_EXISTENT_ID,NEW_EMAIL,PASSWORD))
+            when(findUserByIdUseCase.execute(NON_EXISTENT_ID))
                     .thenThrow(new UserException(UserErrorCode.USER_NOT_FOUND));
 
             //act
             ResultActions resultActions = mockMvc.perform(put("/users/{id}",NON_EXISTENT_ID)
                     .contentType(APPLICATION_JSON)
-                    .content(UPDATE_BODY));
+                    .content(UPDATE_BODY)
+                    .principal(authAs(EMAIL,"PATIENT")));
+
             // assert
             resultActions.andExpect(status().isNotFound());
+            verify(updateUserUseCase,never()).execute(any(),any(),any());
 
         }}
     @Nested
