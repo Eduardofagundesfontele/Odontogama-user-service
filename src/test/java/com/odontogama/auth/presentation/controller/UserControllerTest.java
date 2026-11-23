@@ -1,11 +1,10 @@
-package com.odontogama.odontogama_auth_service.presentation.controller;
+package com.odontogama.auth.presentation.controller;
 
 import com.odontogama.auth.application.usecase.*;
 import com.odontogama.auth.domain.exception.UserErrorCode;
 import com.odontogama.auth.domain.exception.UserException;
 import com.odontogama.auth.domain.model.User;
 import com.odontogama.auth.domain.model.UserRole;
-import com.odontogama.auth.presentation.controller.UserController;
 import com.odontogama.auth.presentation.dto.response.UserResponse;
 import com.odontogama.auth.presentation.exception.GlobalExceptionHandler;
 import com.odontogama.auth.presentation.mapper.UserPresentationMapper;
@@ -23,7 +22,6 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;

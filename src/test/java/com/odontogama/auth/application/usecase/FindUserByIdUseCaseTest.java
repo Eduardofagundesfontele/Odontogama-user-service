@@ -1,6 +1,5 @@
-package com.odontogama.odontogama_auth_service.application.UseCase;
+package com.odontogama.auth.application.usecase;
 
-import com.odontogama.auth.application.usecase.UpdateUserUseCase;
 import com.odontogama.auth.domain.exception.UserErrorCode;
 import com.odontogama.auth.domain.exception.UserException;
 import com.odontogama.auth.domain.model.User;
@@ -20,19 +19,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateUserUseCaseTest {
+public class FindUserByIdUseCaseTest {
     @Mock
     UserRepository userRepository;
 
     @InjectMocks
-    UpdateUserUseCase updateUserUseCase;
+    FindUserByIdUseCase findUserByIdUseCase;
 
     @Test
-    void shouldUpdateUserWhenUserExists(){
-        //Arrange
+    void shouldReturnUserWhenIdExists(){
+        // Arrange
         Long userId = 1L;
-        String newEmail = "novoemail@gmail.com";
-        String newPassword = "NovaSenha123!";
 
         User user = User.create(
                 "eduardo@gmail.com",
@@ -43,47 +40,34 @@ public class UpdateUserUseCaseTest {
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
-        when(userRepository.save(user))
-                .thenReturn(user);
+        //Act
+        User result = findUserByIdUseCase.execute(userId);
 
-        // Act
-        User result = updateUserUseCase.execute(
-                userId,
-                newEmail,
-                newPassword
-        );
-
-        // Assert
-        assertEquals(newEmail, result.getEmail());
+        //Assert
+        assertEquals(user,result);
 
         verify(userRepository).findById(userId);
-        verify(userRepository).save(user);
     }
 
     @Test
-    void shouldThrowExceptionWhenUserDoesNotExist() {
-        // Arrange
+    void shouldThrowUserExceptionWhenIdDoesNotExist(){
+
+        //Arrange
         Long userId = 1L;
 
-        when(userRepository.findById(userId))
+        when (userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
-        // Act + Assert
+        //Act
         UserException exception = assertThrows(
                 UserException.class,
-                () -> updateUserUseCase.execute(
-                        userId,
-                        "novoemail@gmail.com",
-                        "NovaSenha123!"
-                )
+                ()->findUserByIdUseCase.execute(userId)
         );
 
-        assertEquals(
-                UserErrorCode.USER_NOT_FOUND,
-                exception.getErrorCode()
-        );
-
+        //Assert
+        assertEquals(UserErrorCode.USER_NOT_FOUND,exception.getErrorCode());
         verify(userRepository).findById(userId);
+
     }
 
 }
