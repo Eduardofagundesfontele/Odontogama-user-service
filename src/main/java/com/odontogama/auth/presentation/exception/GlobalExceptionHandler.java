@@ -156,6 +156,9 @@ public class GlobalExceptionHandler {
 
             case INVALID_CREDENTIALS ->
                 HttpStatus.UNAUTHORIZED;
+
+            case ACCESS_DENIED ->
+                HttpStatus.FORBIDDEN;
         };
     }
 }

@@ -1,6 +1,8 @@
 package com.odontogama.auth.presentation.controller;
 
 import com.odontogama.auth.application.usecase.*;
+import com.odontogama.auth.domain.exception.UserErrorCode;
+import com.odontogama.auth.domain.exception.UserException;
 import com.odontogama.auth.domain.model.User;
 import com.odontogama.auth.presentation.dto.request.CreateUserRequest;
 import com.odontogama.auth.presentation.dto.request.UpdateUserRequest;
@@ -13,7 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("users")
@@ -28,26 +32,43 @@ public class UserController {
     private final UpdateUserUseCase updateUserUseCase;
     private final UserPresentationMapper mapper;
 
-    @PostMapping
-    public ResponseEntity<UserResponse> create (@Valid @RequestBody CreateUserRequest request){
+    private void checkOwnerOrAdmin(User user, Authentication authentication) {
 
-        User user =createUserUseCase.execute(request.email(),request.password());
+        boolean isOwner = user.getEmail().equals(authentication.getName());
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
+            throw new UserException(UserErrorCode.ACCESS_DENIED);
+        }
+
+
+    }
+
+
+    @PostMapping
+    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
+
+        User user = createUserUseCase.execute(request.email(), request.password());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(user));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> findById(@PathVariable Long id){
+    public ResponseEntity<UserResponse> findById(@PathVariable Long id, Authentication authentication) {
 
         User user = findUserByIdUseCase.execute(id);
 
-       return ResponseEntity.ok(mapper.toResponse(user));
+        checkOwnerOrAdmin(user, authentication);
+
+        return ResponseEntity.ok(mapper.toResponse(user));
     }
 
 
     @GetMapping
-    public ResponseEntity<Page<UserResponse>> findAll( @PageableDefault(size = 10, sort = "id") Pageable pageable){
+    public ResponseEntity<Page<UserResponse>> findAll(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
 
         Page<User> users = findAllUsersUseCase.execute(pageable);
 
@@ -56,23 +77,29 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/email")
+    public ResponseEntity<UserResponse> findByEmail(@RequestParam String email) {
+
+        User user = findUserByEmailUseCase.execute(email);
+
+        return ResponseEntity.ok(mapper.toResponse(user));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<UserResponse> update(@PathVariable Long id,
+                                               @Valid @RequestBody UpdateUserRequest request,
+                                               Authentication authentication) {
+
+
+        User targetUser = findUserByIdUseCase.execute(id);
+
+        checkOwnerOrAdmin(targetUser, authentication);
 
         User user = updateUserUseCase.execute(
                 id,
                 request.email(),
                 request.password()
         );
-
-        return ResponseEntity.ok(mapper.toResponse(user));
-    }
-    @GetMapping("/email")
-    public ResponseEntity<UserResponse> findByEmail(@RequestParam String email){
-
-        User user = findUserByEmailUseCase.execute(email);
 
         return ResponseEntity.ok(mapper.toResponse(user));
     }
