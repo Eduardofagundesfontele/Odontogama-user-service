@@ -229,7 +229,42 @@ class FindById {
 
         //assert
         result.andExpect(status().isNotFound());
+
     }
+
+    @Test
+    @DisplayName("should return 403 when user is not owner nor admin")
+    void shouldReturn403WhenUserIsNotOwnerNorAdmin() throws Exception {
+
+        //arrange
+        when(findUserByIdUseCase.execute(USER_ID)).thenReturn(user);
+        when(user.getEmail()).thenReturn(EMAIL);
+
+        //act
+        ResultActions result = mockMvc.perform(get("/users/{id}", USER_ID)
+                .principal(authAs("outro@gmail.com","PATIENT")));
+
+        //assert
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("should return 200 when admin accesses another user")
+    void shouldReturn200WhenAdminAccessesAnotherUser() throws Exception{
+        //Arrange
+        when(findUserByIdUseCase.execute(UserControllerTest.USER_ID)).thenReturn(user);
+        when(mapper.toResponse(user)).thenReturn(response);
+        when(user.getEmail()).thenReturn(EMAIL);
+
+        //Act
+        ResultActions result = mockMvc.perform(get("/users/{id}", USER_ID)
+                .principal(authAs("admin@gmail.om","ADMIN")));
+
+        //Assert
+        result.andExpect(status().isOk());
+    }
+
+
     @Test
     @DisplayName("should return 400 when id is not a number")
     void shouldReturn400WhenIdIsNotANumber() throws Exception{
