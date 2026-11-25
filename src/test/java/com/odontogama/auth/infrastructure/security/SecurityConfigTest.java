@@ -8,12 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,5 +71,21 @@ public class SecurityConfigTest {
         //Assert
         resultActions.andExpect(status().isForbidden());
         verifyNoInteractions(findAllUsersUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 200 when it is an admin")
+    void shouldReturn200WhenItIsAnAdmin() throws Exception{
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("ADMIN");
+        when(findAllUsersUseCase.execute(any(Pageable.class))).thenReturn(Page.empty());
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(get("/users").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isOk());
+        verify(findAllUsersUseCase).execute(any(Pageable.class));
     }
 }
