@@ -1,0 +1,123 @@
+package com.odontogama.auth.infrastructure.security;
+
+import com.odontogama.auth.application.usecase.*;
+import com.odontogama.auth.presentation.controller.UserController;
+import com.odontogama.auth.presentation.mapper.UserPresentationMapper;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
+public class SecurityConfigTest {
+
+    private static final String TOKEN = "valid-token";
+    private static final String EMAIL = "patient@email.com";
+
+    @MockitoBean
+    private CreateUserUseCase createUserUseCase;
+    @MockitoBean
+    private FindUserByIdUseCase findUserByIdUseCase;
+    @MockitoBean
+    private FindUserByEmailUseCase findUserByEmailUseCase;
+    @MockitoBean
+    private FindAllUsersUseCase findAllUsersUseCase;
+    @MockitoBean
+    private DeleteUserUseCase deleteUserUseCase;
+    @MockitoBean
+    private UpdateUserUseCase updateUserUseCase;
+    @MockitoBean
+    private UserPresentationMapper mapper;
+    @MockitoBean
+    private JwtService jwtService;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    @DisplayName("should return 401 when request has no token")
+    void shouldReturn401WhenRequestHasNoToken() throws Exception {
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(get("/users"));
+
+        //Assert
+        resultActions.andExpect(status().isUnauthorized());
+        verifyNoInteractions(findAllUsersUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 403 when non admin lists users")
+    void shouldReturn403WhenNonAdminListsUsers() throws Exception {
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
+
+        //act
+        ResultActions resultActions = mockMvc.perform(get("/users").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isForbidden());
+        verifyNoInteractions(findAllUsersUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 200 when it is an admin")
+    void shouldReturn200WhenItIsAnAdmin() throws Exception {
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("ADMIN");
+        when(findAllUsersUseCase.execute(any(Pageable.class))).thenReturn(Page.empty());
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(get("/users").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isOk());
+        verify(findAllUsersUseCase).execute(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("should return 403 when non admin deletes a user")
+    void shouldReturn403WhenNonAdminDeletesUser() throws Exception {
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(delete("/users/1").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isForbidden());
+        verify(deleteUserUseCase, never()).execute(any());
+    }
+
+    @Test
+    @DisplayName("should return 403 when non admin searches user by email")
+   void shouldReturn403WhenNonAdminSearchesUserByEmail() throws Exception{
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(get("/users/email?email=patient@email.com").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isForbidden());
+        verify(findUserByEmailUseCase, never()).execute(any());
+    }
+}
+

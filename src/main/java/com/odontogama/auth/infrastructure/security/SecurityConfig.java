@@ -33,6 +33,10 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/users/email").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/users/*").hasRole("ADMIN")
+
                 .anyRequest().authenticated());
 
         httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

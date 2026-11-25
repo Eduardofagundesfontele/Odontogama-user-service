@@ -1,9 +1,8 @@
-package com.odontogama.odontogama_auth_service.infrastructure.persistence.mapper;
+package com.odontogama.auth.infrastructure.persistence.mapper;
 
 import com.odontogama.auth.domain.model.User;
 import com.odontogama.auth.domain.model.UserRole;
 import com.odontogama.auth.infrastructure.persistence.entity.UserEntity;
-import com.odontogama.auth.infrastructure.persistence.mapper.UserPersistenceMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

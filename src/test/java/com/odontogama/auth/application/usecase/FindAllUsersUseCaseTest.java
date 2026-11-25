@@ -1,6 +1,5 @@
-package com.odontogama.odontogama_auth_service.application.UseCase;
+package com.odontogama.auth.application.usecase;
 
-import com.odontogama.auth.application.usecase.FindAllUsersUseCase;
 import com.odontogama.auth.domain.model.User;
 import com.odontogama.auth.domain.model.UserRole;
 import com.odontogama.auth.domain.repository.UserRepository;

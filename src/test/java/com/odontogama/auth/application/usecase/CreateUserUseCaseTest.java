@@ -1,6 +1,5 @@
-package com.odontogama.odontogama_auth_service.application.UseCase;
+package com.odontogama.auth.application.usecase;
 
-import com.odontogama.auth.application.usecase.CreateUserUseCase;
 import com.odontogama.auth.domain.exception.UserErrorCode;
 import com.odontogama.auth.domain.exception.UserException;
 import com.odontogama.auth.domain.model.User;

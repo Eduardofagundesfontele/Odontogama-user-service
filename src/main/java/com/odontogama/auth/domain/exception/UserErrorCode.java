@@ -7,7 +7,8 @@ public enum UserErrorCode {
     USER_NOT_FOUND("USER_003", "user not found"),
     INVALID_PASSWORD("USER_004", "password is invalid"),
     EMAIL_ALREADY_EXISTS("USER_005", "email already exists"),
-    INVALID_CREDENTIALS("USER_006","invalid email or password");
+    INVALID_CREDENTIALS("USER_006","invalid email or password"),
+    ACCESS_DENIED("USER_007","access denied");
 
     private final String code;
     private final String message;
