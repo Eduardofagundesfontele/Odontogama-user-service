@@ -481,7 +481,7 @@ public class UserControllerTest {
 
         @Test
         @DisplayName("should return 200 when admin updates another user")
-        void ShouldReturn200WhenAdminUpdatesAnotherUser() throws Exception{
+        void shouldReturn200WhenAdminUpdatesAnotherUser() throws Exception{
             //Arrange
             when(findUserByIdUseCase.execute(USER_ID)).thenReturn(user);
             when(user.getEmail()).thenReturn(EMAIL);
