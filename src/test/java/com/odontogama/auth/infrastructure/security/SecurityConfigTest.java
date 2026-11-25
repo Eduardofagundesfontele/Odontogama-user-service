@@ -15,9 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +49,7 @@ public class SecurityConfigTest {
 
     @Test
     @DisplayName("should return 401 when request has no token")
-    void shouldReturn401WhenRequestHasNoToken() throws Exception{
+    void shouldReturn401WhenRequestHasNoToken() throws Exception {
 
         //Act
         ResultActions resultActions = mockMvc.perform(get("/users"));
@@ -62,7 +61,7 @@ public class SecurityConfigTest {
 
     @Test
     @DisplayName("should return 403 when non admin lists users")
-    void shouldReturn403WhenNonAdminListsUsers() throws Exception{
+    void shouldReturn403WhenNonAdminListsUsers() throws Exception {
         //Arrange
         when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
         when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
@@ -77,7 +76,7 @@ public class SecurityConfigTest {
 
     @Test
     @DisplayName("should return 200 when it is an admin")
-    void shouldReturn200WhenItIsAnAdmin() throws Exception{
+    void shouldReturn200WhenItIsAnAdmin() throws Exception {
         //Arrange
         when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
         when(jwtService.extractRole(TOKEN)).thenReturn("ADMIN");
@@ -90,4 +89,20 @@ public class SecurityConfigTest {
         resultActions.andExpect(status().isOk());
         verify(findAllUsersUseCase).execute(any(Pageable.class));
     }
+
+    @Test
+    @DisplayName("should return 403 when non admin deletes a user")
+    void shouldReturn403WhenNonAdminDeletesUser() throws Exception {
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(delete("/users/1").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isForbidden());
+        verify(deleteUserUseCase, never()).execute(any());
+    }
 }
+
