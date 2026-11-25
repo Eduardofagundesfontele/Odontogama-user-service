@@ -104,5 +104,20 @@ public class SecurityConfigTest {
         resultActions.andExpect(status().isForbidden());
         verify(deleteUserUseCase, never()).execute(any());
     }
+
+    @Test
+    @DisplayName("should return 403 when non admin searches user by email")
+   void shouldReturn403WhenNonAdminSearchesUserByEmail() throws Exception{
+        //Arrange
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        when(jwtService.extractRole(TOKEN)).thenReturn("PATIENT");
+
+        //Act
+        ResultActions resultActions = mockMvc.perform(get("/users/email?email=patient@email.com").header("Authorization", "Bearer " + TOKEN));
+
+        //Assert
+        resultActions.andExpect(status().isForbidden());
+        verify(findUserByEmailUseCase, never()).execute(any());
+    }
 }
 
